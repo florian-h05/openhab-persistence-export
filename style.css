@@ -323,6 +323,7 @@ body {
 
 .btn-secondary:hover {
   background-color: #d0d0d0;
+  color: #e64a19;
 }
 
 .alert {
