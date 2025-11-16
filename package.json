@@ -1,0 +1,18 @@
+{
+  "name": "openhab-persistence-export",
+  "version": "0.0.1",
+  "description": "A web-based wizard for exporting openHAB persistence data.",
+  "scripts": {
+    "dev": "live-server",
+    "postinstall": "mkdir -p vendor/css vendor/js && cp node_modules/bootstrap/dist/css/bootstrap.min.css vendor/css/ && cp node_modules/bootstrap/dist/js/bootstrap.bundle.min.js vendor/js/ && cp node_modules/flatpickr/dist/flatpickr.min.css vendor/css/ && cp node_modules/flatpickr/dist/flatpickr.min.js vendor/js/"
+  },
+  "keywords": [],
+  "author": "Florian Hotze",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "bootstrap": "5.3.0",
+    "flatpickr": "4.6.13",
+    "live-server": "^1.2.2"
+  }
+}
