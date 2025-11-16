@@ -1,8 +1,9 @@
 // Initialise date pickers when DOM is ready
 document.addEventListener("DOMContentLoaded", function () {
+  setupStepNavigation();
   initializeDatePicker();
   setupFormEventListener();
-  setupStepNavigation();
+  checkQueryParameters();
 });
 
 // Current step tracker
@@ -368,4 +369,20 @@ function handleRestart() {
 
   clearErrors();
   goToStep(1);
+}
+
+/**
+ * Check for query parameters and pre-fill form fields.
+ */
+function checkQueryParameters() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const itemName = urlParams.get('itemname');
+
+  if (itemName) {
+    // Set the item name field
+    document.getElementById("itemName").value = itemName;
+
+    // Skip to step 2 (date range selection)
+    goToStep(2);
+  }
 }
