@@ -1,5 +1,5 @@
 body {
-  background: linear-gradient(135deg, #ff6f40 0%, #e64a19 100%);
+  background: #1f1f1f; /* dark gray */
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -10,7 +10,7 @@ body {
   background: white;
   padding: 2rem;
   border-radius: 10px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0,0,0,0.35);
   max-width: 600px;
   width: 100%;
 }
