@@ -4,6 +4,7 @@
   "description": "A web-based wizard for exporting openHAB persistence data.",
   "scripts": {
     "dev": "live-server",
+    "format": "prettier --write .",
     "postinstall": "mkdir -p vendor/css vendor/js && cp node_modules/bootstrap/dist/css/bootstrap.min.css vendor/css/ && cp node_modules/bootstrap/dist/js/bootstrap.bundle.min.js vendor/js/ && cp node_modules/flatpickr/dist/flatpickr.min.css vendor/css/ && cp node_modules/flatpickr/dist/flatpickr.min.js vendor/js/"
   },
   "keywords": [],
@@ -13,6 +14,7 @@
   "devDependencies": {
     "bootstrap": "5.3.0",
     "flatpickr": "4.6.13",
-    "live-server": "^1.2.2"
+    "live-server": "^1.2.2",
+    "prettier": "^3.6.2"
   }
 }

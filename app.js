@@ -206,7 +206,7 @@ function initialDatePickerRange() {
   const endDate = new Date();
   beginDate.setDate(endDate.getDate() - 30);
 
-  return [beginDate, endDate]
+  return [beginDate, endDate];
 }
 
 /**
@@ -262,7 +262,9 @@ function handleFormSubmit(e) {
   // Get form values
   const itemName = document.getElementById("itemName").value.trim();
   const dateRangeValue = document.getElementById("dateRange").value;
-  const fileFormat = document.querySelector('input[name="fileFormat"]:checked',).value;
+  const fileFormat = document.querySelector(
+    'input[name="fileFormat"]:checked',
+  ).value;
 
   // Validate inputs
   if (!itemName) {
@@ -329,16 +331,20 @@ function handleDownload() {
     content += "2024-01-02T00:00:00Z,105\n";
     content += "2024-01-03T00:00:00Z,110\n";
   } else if (fileFormat === "JSON") {
-    content = JSON.stringify({
-      itemName: itemName,
-      beginDate: beginDate,
-      endDate: endDate,
-      data: [
-        { timestamp: "2024-01-01T00:00:00Z", value: 100 },
-        { timestamp: "2024-01-02T00:00:00Z", value: 105 },
-        { timestamp: "2024-01-03T00:00:00Z", value: 110 },
-      ],
-    }, null, 2);
+    content = JSON.stringify(
+      {
+        itemName: itemName,
+        beginDate: beginDate,
+        endDate: endDate,
+        data: [
+          { timestamp: "2024-01-01T00:00:00Z", value: 100 },
+          { timestamp: "2024-01-02T00:00:00Z", value: 105 },
+          { timestamp: "2024-01-03T00:00:00Z", value: 110 },
+        ],
+      },
+      null,
+      2,
+    );
   }
 
   // Create a blob and trigger download
@@ -364,8 +370,10 @@ function handleRestart() {
 
   // Reset form fields
   document.getElementById("itemName").value = "";
-  document.getElementById("dateRange").value = initialDatePickerRange().join(" to ");
-  document.querySelector('input[name="fileFormat"][value="CSV"]').checked = true;
+  document.getElementById("dateRange").value =
+    initialDatePickerRange().join(" to ");
+  document.querySelector('input[name="fileFormat"][value="CSV"]').checked =
+    true;
 
   clearErrors();
   goToStep(1);
@@ -376,7 +384,7 @@ function handleRestart() {
  */
 function checkQueryParameters() {
   const urlParams = new URLSearchParams(window.location.search);
-  const itemName = urlParams.get('itemname');
+  const itemName = urlParams.get("itemname");
 
   if (itemName) {
     // Set the item name field
