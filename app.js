@@ -1,3 +1,5 @@
+import { formatLocalISO, escapeCSVField, downloadFile } from "./lib.js";
+
 // Initialise date pickers when DOM is ready
 document.addEventListener("DOMContentLoaded", function () {
   setupStepNavigation();
@@ -314,51 +316,148 @@ function handleFormSubmit(e) {
 }
 
 // Handle download button click
-function handleDownload() {
+async function handleDownload() {
   if (!exportFormData) {
     console.error("No export data available");
     return;
   }
 
   const { itemName, beginDate, endDate, fileFormat } = exportFormData;
-  const filename = `${itemName}_${beginDate}_to_${endDate}.${fileFormat.toLowerCase()}`;
+  const filename = `${itemName}_${beginDate}_to_${endDate}`;
 
-  // TODO: Implement actual REST API call and data processing; mock data for now
-  let content = "";
-  if (fileFormat === "CSV") {
-    content = "timestamp,value\n";
-    content += "2024-01-01T00:00:00Z,100\n";
-    content += "2024-01-02T00:00:00Z,105\n";
-    content += "2024-01-03T00:00:00Z,110\n";
-  } else if (fileFormat === "JSON") {
-    content = JSON.stringify(
-      {
-        itemName: itemName,
-        beginDate: beginDate,
-        endDate: endDate,
-        data: [
-          { timestamp: "2024-01-01T00:00:00Z", value: 100 },
-          { timestamp: "2024-01-02T00:00:00Z", value: 105 },
-          { timestamp: "2024-01-03T00:00:00Z", value: 110 },
-        ],
-      },
-      null,
-      2,
-    );
+  async function fetchItemUnit(item) {
+    try {
+      // Limit returned fields to unitSymbol to reduce payload
+      const url = `/rest/items/${encodeURIComponent(item)}`;
+      const res = await fetch(url, {
+        headers: { Accept: "application/json" },
+      });
+
+      if (!res.ok) {
+        console.warn(`Failed to fetch item metadata for ${item}: ${res.status}`);
+        return "";
+      }
+
+      const json = await res.json();
+      // unitSymbol may be present or undefined
+      return json.unitSymbol || "";
+    } catch (err) {
+      console.error(`Error fetching item metadata for ${item}:`, err);
+      return "";
+    }
   }
 
-  // Create a blob and trigger download
-  const blob = new Blob([content], {
-    type: fileFormat === "CSV" ? "text/csv" : "application/json",
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  async function fetchPersistenceData(item, startISO, endISO) {
+    const rows = [];
+
+    const url = `/rest/persistence/items/${encodeURIComponent(item)}?starttime=${encodeURIComponent(startISO)}&endtime=${encodeURIComponent(endISO)}`;
+
+    let res;
+    try {
+      res = await fetch(url, {
+        headers: { Accept: "application/json" },
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error(`Network error fetching history for ${item}:`, err);
+      return rows;
+    }
+
+    if (!res.ok) {
+      console.error(`Failed to fetch history for ${item}: ${res.status}`);
+      return rows;
+    }
+
+    const json = await res.json();
+    const data = json.data || [];
+
+    for (const dp of data) {
+      const date = new Date(dp.time);
+      const utcIso = date.toISOString();
+      const localIso = formatLocalISO(date);
+
+      const value = dp.state;
+
+      rows.push({ item, time: date, utcIso, localIso, value });
+    }
+
+    return rows;
+  }
+
+  // Convert beginDate/endDate (YYYY-MM-DD) to ISO range covering whole days
+  const startISO = `${beginDate}T00:00:00.000Z`;
+  const endISO = `${endDate}T23:59:59.999Z`;
+
+  try {
+    if (fileFormat === "CSV") {
+      // CSV header per specification: Item Name,UTC Time,Local Time,Value,Unit
+      const header =
+        ["Item Name", "UTC Time", "Local Time", "Value", "Unit"]
+          .map(escapeCSVField)
+          .join(",") + "\n";
+
+      // Fetch unit (metadata) and history
+      const unit = await fetchItemUnit(itemName);
+
+      // Fetch persistence data and build CSV rows
+      const rows = await fetchPersistenceData(itemName, startISO, endISO);
+
+      // Assemble CSV content
+      const csvParts = [header];
+
+      for (const r of rows) {
+        const row =
+          [
+            escapeCSVField(r.item),
+            escapeCSVField(r.utcIso),
+            escapeCSVField(r.localIso),
+            r.value,
+            unit ? escapeCSVField(unit) : "",
+          ].join(",") + "\n";
+
+        csvParts.push(row);
+      }
+
+      // If no rows, include a comment row indicating empty result
+      if (rows.length === 0) {
+        csvParts.push(
+          `# No historic data found for ${itemName} in range ${beginDate} to ${endDate}\n`,
+        );
+      }
+
+      const content = csvParts.join("");
+
+      const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
+      downloadFile(filename, blob);
+    } else if (fileFormat === "JSON") {
+      const unit = await fetchItemUnit(itemName);
+      const historyRows = await fetchPersistenceData(
+        itemName,
+        startISO,
+        endISO,
+      );
+
+      const jsonOut = {
+        itemName: itemName,
+        unit: unit || null,
+        beginDate: beginDate,
+        endDate: endDate,
+        datapoints: historyRows.length,
+        data: historyRows.map((r) => ({
+          time: r.time,
+          timeUtc: r.utcIso,
+          timeLocal: r.localIso,
+          value: r.value,
+        })),
+      };
+
+      const content = JSON.stringify(jsonOut, null, 2);
+      const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+      downloadFile(filename, blob);
+    }
+  } catch (err) {
+    console.error("Error during export:", err);
+  }
 }
 
 /**
