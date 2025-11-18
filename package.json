@@ -4,9 +4,10 @@
   "description": "A web-based wizard for exporting openHAB persistence data.",
   "scripts": {
     "dev": "parcel serve index.html --open",
-    "build": "rm -rf dist && parcel build index.html --dist-dir dist --public-url ./ --no-source-maps --detailed-report",
+    "prebuild": "npm run lint && rm -rf dist",
+    "build": "parcel build index.html --dist-dir dist --public-url ./ --no-source-maps --detailed-report",
     "prepreview": "npm run build",
-    "preview": "npx http-server dist -p 8000",
+    "preview": "npx http-server dist",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write ."
