@@ -3,7 +3,14 @@
   "version": "0.0.1",
   "description": "A web-based wizard for exporting openHAB persistence data.",
   "scripts": {
-    "dev": "live-server",
+    "dev": "parcel serve index.html --open",
+    "build": "parcel build index.html --dist-dir dist --public-url ./ --no-source-maps --detailed-report",
+
+    "prepreview": "npm run build",
+    "preview": "npx http-server dist -p 8000",
+
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write ."
   },
   "keywords": [],
@@ -11,8 +18,13 @@
   "license": "MIT",
   "type": "module",
   "devDependencies": {
+    "@eslint/css": "^0.14.1",
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
     "flatpickr": "4.6.13",
+    "globals": "^16.5.0",
     "live-server": "^1.2.2",
+    "parcel": "^2.9.3",
     "prettier": "^3.6.2"
   }
 }

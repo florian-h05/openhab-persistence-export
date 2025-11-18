@@ -1,5 +1,7 @@
 .idea
 .vscode
 
+.parcel-cache
+dist
 vendor
 node_modules
