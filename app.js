@@ -1,4 +1,5 @@
 import { formatLocalISO, escapeCSVField, downloadFile } from "./lib.js";
+import flatpickr from 'flatpickr'
 
 // Initialise date pickers when DOM is ready
 document.addEventListener("DOMContentLoaded", function () {
