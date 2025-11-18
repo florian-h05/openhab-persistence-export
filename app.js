@@ -1,5 +1,5 @@
 import { formatLocalISO, escapeCSVField, downloadFile } from "./lib.js";
-import flatpickr from 'flatpickr'
+import flatpickr from "flatpickr";
 
 // Initialise date pickers when DOM is ready
 document.addEventListener("DOMContentLoaded", function () {
@@ -379,7 +379,7 @@ async function handleDownload() {
 
     if (!res.ok) {
       throw new Error(
-        `Failed to fetch item metadata for ${itemName}: ${res.status}`,
+        `Failed to fetch item metadata for ${itemName}: ${res.status} ${res.statusText}`,
       );
     }
 
