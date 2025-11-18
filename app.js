@@ -125,7 +125,7 @@ function updateButtons() {
  */
 function validateStep(step) {
   // Clear all previous errors
-  clearErrors();
+  clearFieldErrors();
 
   if (step === 1) {
     const itemName = document.getElementById("itemName").value.trim();
@@ -189,7 +189,7 @@ function clearFieldError(fieldId) {
 /**
  * Clear all form field errors.
  */
-function clearErrors() {
+function clearFieldErrors() {
   document.querySelectorAll(".error-text").forEach((el) => {
     el.textContent = "";
   });
@@ -315,42 +315,90 @@ function handleFormSubmit(e) {
   goToStep(4);
 }
 
-// Handle download button click
+/**
+ * Show an error message on the download page.
+ * @param {string} message
+ */
+function showDownloadError(message) {
+  const errorEl = document.getElementById("downloadError");
+  if (!errorEl) return;
+  errorEl.textContent = message;
+  errorEl.style.display = "block";
+  const downloadBtn = document.getElementById("downloadContainer");
+  if (downloadBtn) downloadBtn.style.display = "none";
+}
+
+/**
+ * Clear error message on the download page.
+ */
+function clearDownloadError() {
+  const errorEl = document.getElementById("downloadError");
+  if (!errorEl) return;
+  errorEl.textContent = "";
+  errorEl.style.display = "none";
+  const downloadBtn = document.getElementById("downloadContainer");
+  if (downloadBtn) downloadBtn.style.display = "flex";
+}
+
+/**
+ * Handle download button click.
+ * @return {Promise<void>}
+ */
 async function handleDownload() {
+  clearDownloadError();
+
   if (!exportFormData) {
-    console.error("No export data available");
-    return;
+    const msg = "No export form data available!";
+    showDownloadError(msg);
+    return Promise.reject(new Error(msg));
   }
 
   const { itemName, beginDate, endDate, fileFormat } = exportFormData;
   const filename = `${itemName}_${beginDate}_to_${endDate}`;
 
-  async function fetchItemUnit(item) {
+  /**
+   * Get the unit for an Item.
+   * @param {string} itemName
+   * @return {Promise<string>}
+   * @throws {Error} if the request fails
+   */
+  async function fetchItemUnit(itemName) {
+    // Limit returned fields to unitSymbol to reduce payload
+    const url = `/rest/items/${encodeURIComponent(itemName)}`;
+    let res;
     try {
-      // Limit returned fields to unitSymbol to reduce payload
-      const url = `/rest/items/${encodeURIComponent(item)}`;
-      const res = await fetch(url, {
+      res = await fetch(url, {
         headers: { Accept: "application/json" },
       });
-
-      if (!res.ok) {
-        console.warn(`Failed to fetch item metadata for ${item}: ${res.status}`);
-        return "";
-      }
-
-      const json = await res.json();
-      // unitSymbol may be present or undefined
-      return json.unitSymbol || "";
     } catch (err) {
-      console.error(`Error fetching item metadata for ${item}:`, err);
-      return "";
+      throw new Error(
+        `Error fetching item metadata for ${itemName}: ${err && err.message ? err.message : err}`,
+      );
     }
+
+    if (!res.ok) {
+      throw new Error(
+        `Failed to fetch item metadata for ${itemName}: ${res.status}`,
+      );
+    }
+
+    const json = await res.json();
+    // unitSymbol may be present or undefined
+    return json.unitSymbol || "";
   }
 
-  async function fetchPersistenceData(item, startISO, endISO) {
+  /**
+   * Get the persistence data for an Item within a specified time range.
+   * @param {string} itemName
+   * @param {string} startISO
+   * @param {string} endISO
+   * @return {Promise<[]>}
+   * @throws {Error} if the request fails
+   */
+  async function fetchPersistenceData(itemName, startISO, endISO) {
     const rows = [];
 
-    const url = `/rest/persistence/items/${encodeURIComponent(item)}?starttime=${encodeURIComponent(startISO)}&endtime=${encodeURIComponent(endISO)}`;
+    const url = `/rest/persistence/items/${encodeURIComponent(itemName)}?starttime=${encodeURIComponent(startISO)}&endtime=${encodeURIComponent(endISO)}`;
 
     let res;
     try {
@@ -359,17 +407,23 @@ async function handleDownload() {
         credentials: "include",
       });
     } catch (err) {
-      console.error(`Network error fetching history for ${item}:`, err);
-      return rows;
+      throw new Error(
+        `Network error fetching history for ${itemName}: ${err && err.message ? err.message : err}`,
+      );
     }
 
     if (!res.ok) {
-      console.error(`Failed to fetch history for ${item}: ${res.status}`);
-      return rows;
+      throw new Error(`Failed to fetch history for ${itemName}: ${res.status}`);
     }
 
     const json = await res.json();
     const data = json.data || [];
+
+    if (!data.length) {
+      throw new Error(
+        `No data found for ${itemName} in range ${beginDate} to ${endDate}`,
+      );
+    }
 
     for (const dp of data) {
       const date = new Date(dp.time);
@@ -378,7 +432,7 @@ async function handleDownload() {
 
       const value = dp.state;
 
-      rows.push({ item, time: date, utcIso, localIso, value });
+      rows.push({ item: itemName, time: date, utcIso, localIso, value });
     }
 
     return rows;
@@ -388,6 +442,15 @@ async function handleDownload() {
   const startISO = `${beginDate}T00:00:00.000Z`;
   const endISO = `${endDate}T23:59:59.999Z`;
 
+  let unit, data;
+  try {
+    unit = await fetchItemUnit(itemName);
+    data = await fetchPersistenceData(itemName, startISO, endISO);
+  } catch (err) {
+    showDownloadError(err.message);
+    return Promise.reject(err);
+  }
+
   try {
     if (fileFormat === "CSV") {
       // CSV header per specification: Item Name,UTC Time,Local Time,Value,Unit
@@ -396,33 +459,20 @@ async function handleDownload() {
           .map(escapeCSVField)
           .join(",") + "\n";
 
-      // Fetch unit (metadata) and history
-      const unit = await fetchItemUnit(itemName);
-
-      // Fetch persistence data and build CSV rows
-      const rows = await fetchPersistenceData(itemName, startISO, endISO);
-
       // Assemble CSV content
       const csvParts = [header];
 
-      for (const r of rows) {
+      for (const dp of data) {
         const row =
           [
-            escapeCSVField(r.item),
-            escapeCSVField(r.utcIso),
-            escapeCSVField(r.localIso),
-            r.value,
+            escapeCSVField(dp.item),
+            escapeCSVField(dp.utcIso),
+            escapeCSVField(dp.localIso),
+            dp.value,
             unit ? escapeCSVField(unit) : "",
           ].join(",") + "\n";
 
         csvParts.push(row);
-      }
-
-      // If no rows, include a comment row indicating empty result
-      if (rows.length === 0) {
-        csvParts.push(
-          `# No historic data found for ${itemName} in range ${beginDate} to ${endDate}\n`,
-        );
       }
 
       const content = csvParts.join("");
@@ -430,20 +480,13 @@ async function handleDownload() {
       const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
       downloadFile(filename, blob);
     } else if (fileFormat === "JSON") {
-      const unit = await fetchItemUnit(itemName);
-      const historyRows = await fetchPersistenceData(
-        itemName,
-        startISO,
-        endISO,
-      );
-
       const jsonOut = {
         itemName: itemName,
         unit: unit || null,
         beginDate: beginDate,
         endDate: endDate,
-        datapoints: historyRows.length,
-        data: historyRows.map((r) => ({
+        datapoints: data.length,
+        data: data.map((r) => ({
           time: r.time,
           timeUtc: r.utcIso,
           timeLocal: r.localIso,
@@ -452,11 +495,15 @@ async function handleDownload() {
       };
 
       const content = JSON.stringify(jsonOut, null, 2);
-      const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+      const blob = new Blob([content], {
+        type: "application/json;charset=utf-8",
+      });
       downloadFile(filename, blob);
     }
   } catch (err) {
-    console.error("Error during export:", err);
+    const msg = `Error during export: ${err && err.message ? err.message : err}`;
+    showDownloadError(msg);
+    throw new Error(msg);
   }
 }
 
@@ -474,7 +521,8 @@ function handleRestart() {
   document.querySelector('input[name="fileFormat"][value="CSV"]').checked =
     true;
 
-  clearErrors();
+  clearFieldErrors();
+  clearDownloadError();
   goToStep(1);
 }
 

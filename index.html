@@ -153,7 +153,16 @@
               <h2>Download</h2>
               <p>Your export is ready! Click the button below to download.</p>
             </div>
-            <div class="download-container">
+
+            <div
+              id="downloadError"
+              class="error-text"
+              role="alert"
+              aria-live="polite"
+              style="display: none"
+            ></div>
+
+            <div id="downloadContainer" class="download-container">
               <button type="button" class="download-btn" id="downloadBtn">
                 <svg
                   class="download-icon"

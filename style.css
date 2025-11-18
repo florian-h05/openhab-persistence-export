@@ -222,7 +222,8 @@ body {
   box-shadow: 0 0 0 0.2rem rgba(230, 74, 25, 0.15);
 }
 
-.form-control:focus, .form-control:focus-visible {
+.form-control:focus,
+.form-control:focus-visible {
   outline: none; /* remove default blue outline */
   border-color: #e64a19;
   box-shadow: 0 0 0 0.2rem rgba(230, 74, 25, 0.25);
@@ -435,4 +436,36 @@ select.form-control:focus {
 
 .download-btn:hover .download-icon {
   transform: scale(1.1);
+}
+
+#downloadError {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 3.25rem; /* leave space for badge */
+  border: 1px solid #e64a19; /* red border */
+  background-color: #fff2f0; /* light red/pink background */
+  color: #7a1f12; /* dark red text for contrast */
+  border-radius: 6px;
+  position: relative;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+/* Exclamation Mark for download error box */
+#downloadError::before {
+  content: "!";
+  position: absolute;
+  left: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e64a19; /* red */
+  color: white;
+  border-radius: 50%;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(230, 74, 25, 0.25);
 }
