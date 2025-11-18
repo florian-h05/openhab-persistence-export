@@ -1,6 +1,6 @@
 {
   "name": "openhab-persistence-export",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "A web-based wizard for exporting openHAB persistence data.",
   "scripts": {
     "dev": "parcel serve index.html --open",
