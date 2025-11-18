@@ -5,11 +5,20 @@ Using vanilla JavaScript and Parcel for bundling, the deployed app is fully stat
 
 ## Usage
 
-This app assumes that _Implicit User-Role_ is enabled in the _API Security_ settings of openHAB.
+> [!NOTE]
+> This app assumes that _Implicit User-Role_ is enabled in the _API Security_ settings of openHAB.
+> It does not implement authentication.
 
-1. Create a `persistenc-export` folder in `$OPENHAB_CONF`.
-1. Deploy the contents of the `dist/` folder into the `$OPENHAB_CONF/html/persistence-export` folder.
-1. You can now use the wizard at `http[s]://<openHAB host>/static/persistence-export`.
+1. Create a `persistence-export` folder in `$OPENHAB_CONF/html`.
+1. `cd` into the newly created folder.
+1. Select a release version from the [releases page](https://github.com/florian-h05/openhab-persistence-export/releases).
+1. Download and extract the release tarball, remember to set `RELEASE` to the desired version:
+   ```shell
+   RELEASE=1.0.0 curl -L https://github.com/florian-h05/openhab-persistence-export/releases/download/v$RELEASE/dist-v$RELEASE.tar.gz | tar -xz --strip-components=1 -C .
+   ```
+
+You can now access the app at `http://<openhab-host>:8080/static/persistence-export/index.html`.
+The `itemname` query parameter can be used to pre-select an Item: `http://<openhab-host>:8080/static/persistence-export/index.html?itemname=Florian_Temperatur`.
 
 ### CSV Export Example
 
