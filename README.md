@@ -14,7 +14,7 @@ Using vanilla JavaScript and Parcel for bundling, the deployed app is fully stat
 1. Select a release version from the [releases page](https://github.com/florian-h05/openhab-persistence-export/releases).
 1. Download and extract the release tarball, remember to set `RELEASE` to the desired version:
    ```shell
-   RELEASE=1.0.0 curl -L https://github.com/florian-h05/openhab-persistence-export/releases/download/v$RELEASE/dist-v$RELEASE.tar.gz | tar -xz --strip-components=1 -C .
+   RELEASE=1.0.1 curl -L https://github.com/florian-h05/openhab-persistence-export/releases/download/v$RELEASE/dist-v$RELEASE.tar.gz | tar -xz --strip-components=1 -C .
    ```
 
 You can now access the app at `http://<openhab-host>:8080/static/persistence-export/index.html`.
