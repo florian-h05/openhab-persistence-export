@@ -253,6 +253,49 @@ function setupFormEventListener() {
   if (restartBtn) {
     restartBtn.addEventListener("click", handleRestart);
   }
+
+  /**
+   * Intercept enter key press to advance wizard instead of submitting the form.
+   */
+  exportForm.addEventListener("keydown", function (e) {
+    // Only handle Enter key
+    if (e.key !== "Enter") return;
+    const target = e.target;
+
+    // Allow Enter in textarea or contenteditable elements
+    if (
+      target.tagName === "TEXTAREA" ||
+      (typeof target.isContentEditable === "boolean" &&
+        target.isContentEditable)
+    ) {
+      return;
+    }
+
+    // Allow Enter on interactive controls that expect it (buttons, file inputs, etc.)
+    if (target.tagName === "BUTTON") return;
+    if (target.tagName === "INPUT") {
+      const t = (target.type || "").toLowerCase();
+      if (
+        ["submit", "button", "image", "file", "checkbox", "radio"].includes(t)
+      ) {
+        return;
+      }
+    }
+
+    // Respect modifier keys (Ctrl/Cmd/Alt) so shortcuts still work
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+    // Allow Enter for the last wizard input step
+    if (currentStep === 3) return;
+
+    // Prevent the browser submitting the form
+    e.preventDefault();
+
+    // Use the same navigation logic as the button listeners
+    if (validateStep(currentStep)) {
+      goToStep(currentStep + 1);
+    }
+  });
 }
 
 /**
